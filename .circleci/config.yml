@@ -1,0 +1,21 @@
+version: 2.1
+
+orbs:
+    aws-ecr: circleci/aws-ecr@7.0.0
+    aws-ecs: circleci/aws-ecs@2.2.1
+
+workflows:
+    build_and_push_image:
+        jobs:
+        - aws-ecr/build-and-push-image:
+            region: AWS_DEFAULT_REGION
+            account-url: AWS_ECR_ACCOUNT_URL
+            repo: 'mission-tools-nginx'
+            tag: "${CIRCLE_SHA1}"
+        - aws-ecs/deploy-service-update:
+            requires:
+                - aws-ecr/build-and-push-image
+            family: 'mission_tools_task'
+            cluster-name: 'Studio-Mission-Tools'
+            service-name: 'Studoi-Mission-Tools-API'
+            container-image-name-updates: 'container=mission_tools_nginx,tag=${CIRCLE_SHA1}'
